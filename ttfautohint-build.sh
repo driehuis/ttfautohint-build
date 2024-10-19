@@ -41,13 +41,11 @@ INST="$BUILD/local"
 TTFAUTOHINT_BIN="$INST/bin/ttfautohint"
 
 # The library versions.
-FREETYPE_VERSION="2.10.2"
 HARFBUZZ_VERSION="2.7.2"
 TTFAUTOHINT_VERSION="1.8.4"
 
 # Necessary patches (lists of at most 10 URLs each separated by whitespace,
 # to be applied in order).
-FREETYPE_PATCHES=""
 HARFBUZZ_PATCHES=""
 TTFAUTOHINT_PATCHES=""
 
@@ -56,7 +54,6 @@ TTFAUTOHINT_PATCHES=""
 # Nothing to configure below this comment.
 #
 
-FREETYPE="freetype-$FREETYPE_VERSION"
 HARFBUZZ="harfbuzz-$HARFBUZZ_VERSION"
 TTFAUTOHINT="ttfautohint-$TTFAUTOHINT_VERSION"
 
@@ -75,16 +72,8 @@ echo "#####"
 echo "Download all necessary archives and patches."
 echo "#####"
 
-curl -L -O "https://download.savannah.gnu.org/releases/freetype/$FREETYPE.tar.gz"
 curl -L -O "https://github.com/harfbuzz/harfbuzz/releases/download/$HARFBUZZ_VERSION/$HARFBUZZ.tar.xz"
 curl -L -O "https://download.savannah.gnu.org/releases/freetype/$TTFAUTOHINT.tar.gz"
-
-count=0
-for i in $FREETYPE_PATCHES
-do
-  curl -o ft-patch-$count.diff "$i"
-  count=`expr $count + 1`
-done
 
 count=0
 for i in $HARFBUZZ_PATCHES
@@ -112,7 +101,6 @@ echo "#####"
 echo "Extract archives."
 echo "#####"
 
-tar -xzvf "$FREETYPE.tar.gz"
 tar -xvf "$HARFBUZZ.tar.xz"
 tar -xzvf "$TTFAUTOHINT.tar.gz"
 
@@ -120,14 +108,6 @@ tar -xzvf "$TTFAUTOHINT.tar.gz"
 echo "#####"
 echo "Apply patches."
 echo "#####"
-
-cd "$FREETYPE" || exit 1
-for i in ../ft-patch-*.diff
-do
-  test -f "$i" || continue
-  patch -p1 -N -r - < "$i"
-done
-cd ..
 
 cd "$HARFBUZZ" || exit 1
 for i in ../hb-patch-*.diff
@@ -143,33 +123,6 @@ do
   test -f "$i" || continue
   patch -p1 -N -r - < "$i"
 done
-cd ..
-
-
-echo "#####"
-echo "$FREETYPE"
-echo "#####"
-
-cd "$FREETYPE" || exit 1
-
-# The space in `PKG_CONFIG' ensures that the created `freetype-config' file
-# doesn't find a working pkg-config, falling back to the stored strings
-# (which is what we want).
-./configure \
-  --without-bzip2 \
-  --without-png \
-  --without-zlib \
-  --without-harfbuzz \
-  --prefix="$INST" \
-  --enable-static \
-  --disable-shared \
-  --enable-freetype-config \
-  PKG_CONFIG=" " \
-  CFLAGS="$TA_CPPFLAGS $TA_CFLAGS" \
-  CXXFLAGS="$TA_CPPFLAGS $TA_CXXFLAGS" \
-  LDFLAGS="$TA_LDFLAGS"
-make
-make install
 cd ..
 
 
@@ -195,8 +148,7 @@ cd "$HARFBUZZ" || exit 1
   CXXFLAGS="$TA_CPPFLAGS $TA_CXXFLAGS" \
   LDFLAGS="$TA_LDFLAGS" \
   PKG_CONFIG=true \
-  FREETYPE_CFLAGS="$TA_CPPFLAGS/freetype2" \
-  FREETYPE_LIBS="$TA_LDFLAGS -lfreetype"
+  FREETYPE_LIBS="-lfreetype"
 make
 make install
 cd ..
@@ -217,7 +169,6 @@ cd "$TTFAUTOHINT" || exit 1
   --prefix="$INST" \
   --enable-static \
   --disable-shared \
-  --with-freetype-config="$INST/bin/freetype-config" \
   CFLAGS="$TA_CPPFLAGS $TA_CFLAGS" \
   CXXFLAGS="$TA_CPPFLAGS $TA_CXXFLAGS" \
   LDFLAGS="$TA_LDFLAGS" \
